@@ -1,0 +1,152 @@
+{
+    "name": "indexer-database-v5",
+    "storage_type": "disk",
+    "mappings": {
+        "properties": {
+            "@timestamp": {
+                "type": "date",
+                "index": true,
+                "store": false,
+                "sortable": true,
+                "aggregatable": true,
+                "highlightable": false
+            },
+            "_id": {
+                "type": "keyword",
+                "index": true,
+                "store": false,
+                "sortable": true,
+                "aggregatable": true,
+                "highlightable": false
+            },
+            "content": {
+                "type": "text",
+                "index": true,
+                "store": false,
+                "sortable": false,
+                "aggregatable": false,
+                "highlightable": true
+            },
+            "content_transfer_encoding": {
+                "type": "text",
+                "index": false,
+                "store": false,
+                "sortable": false,
+                "aggregatable": false,
+                "highlightable": false
+            },
+            "content_type": {
+                "type": "text",
+                "index": false,
+                "store": false,
+                "sortable": false,
+                "aggregatable": false,
+                "highlightable": false
+            },
+            "date": {
+                "type": "text",
+                "index": false,
+                "store": false,
+                "sortable": false,
+                "aggregatable": false,
+                "highlightable": false
+            },
+            "from": {
+                "type": "text",
+                "index": true,
+                "store": false,
+                "sortable": false,
+                "aggregatable": false,
+                "highlightable": true
+            },
+            "message_id": {
+                "type": "text",
+                "index": false,
+                "store": false,
+                "sortable": false,
+                "aggregatable": false,
+                "highlightable": false
+            },
+            "mime_version": {
+                "type": "text",
+                "index": false,
+                "store": false,
+                "sortable": false,
+                "aggregatable": false,
+                "highlightable": false
+            },
+            "subject": {
+                "type": "text",
+                "index": true,
+                "store": false,
+                "sortable": false,
+                "aggregatable": false,
+                "highlightable": true
+            },
+            "to": {
+                "type": "text",
+                "index": false,
+                "store": false,
+                "sortable": false,
+                "aggregatable": false,
+                "highlightable": false
+            },
+            "x_bcc": {
+                "type": "text",
+                "index": false,
+                "store": false,
+                "sortable": false,
+                "aggregatable": false,
+                "highlightable": false
+            },
+            "x_cc": {
+                "type": "text",
+                "index": false,
+                "store": false,
+                "sortable": false,
+                "aggregatable": false,
+                "highlightable": false
+            },
+            "x_filename": {
+                "type": "text",
+                "index": false,
+                "store": false,
+                "sortable": false,
+                "aggregatable": false,
+                "highlightable": false
+            },
+            "x_folder": {
+                "type": "text",
+                "index": false,
+                "store": false,
+                "sortable": false,
+                "aggregatable": false,
+                "highlightable": false
+            },
+            "x_from": {
+                "type": "text",
+                "index": false,
+                "store": false,
+                "sortable": false,
+                "aggregatable": false,
+                "highlightable": false
+            },
+            "x_origin": {
+                "type": "text",
+                "index": false,
+                "store": false,
+                "sortable": false,
+                "aggregatable": false,
+                "highlightable": false
+            },
+            "x_to": {
+                "type": "text",
+                "index": false,
+                "store": false,
+                "sortable": false,
+                "aggregatable": false,
+                "highlightable": false
+            }
+        }
+    }
+}
