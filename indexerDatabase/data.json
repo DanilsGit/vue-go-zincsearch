@@ -1,14 +1,14 @@
 {
-    "name": "indexer-database-v5",
+    "name": "indexer-database-v6",
     "storage_type": "disk",
     "mappings": {
         "properties": {
             "@timestamp": {
                 "type": "date",
-                "index": true,
+                "index": false,
                 "store": false,
-                "sortable": true,
-                "aggregatable": true,
+                "sortable": false,
+                "aggregatable": false,
                 "highlightable": false
             },
             "_id": {

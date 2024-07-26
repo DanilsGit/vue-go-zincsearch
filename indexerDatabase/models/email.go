@@ -24,3 +24,8 @@ type Bulk struct {
 	Index   string  `json:"index"`
 	Records []Email `json:"records"`
 }
+
+type Single struct {
+	Index  string `json:"index"`
+	Record Email  `json:"record"`
+}

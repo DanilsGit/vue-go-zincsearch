@@ -12,12 +12,19 @@ import (
 	"runtime"
 	"runtime/pprof"
 	"strings"
+	"sync"
+	"time"
 
 	"github.com/danilsgit/indexerDatabase/constants"
 	"github.com/danilsgit/indexerDatabase/models"
 )
 
 func main() {
+
+	// start time
+	start := time.Now()
+	fmt.Println("Start time is: ", start)
+
 	// Create a CPU profile
 	f, errCpu := os.Create("cpu_profile.prof")
 	if errCpu != nil {
@@ -38,15 +45,18 @@ func main() {
 	}
 	defer memFile.Close()
 
-	// Read the data from the Enron email dataset
+	// Create a new WaitGroup
+	wg := &sync.WaitGroup{}
+
+	// data is the Enron email dataset
 	data := "./enron_mail_20110402/maildir"
 	// Emails slice
-	var emails []models.Email
+	var pathEmails []string
 
 	// Create a new index in ZincSearch
 	createNewIndex()
 
-	// Walk the directory and read the email files
+	// Walk the directory and read the email paths
 	err := filepath.Walk(data, func(path string, info os.FileInfo, err error) error {
 		// If there is an error, return it
 		if err != nil {
@@ -58,18 +68,30 @@ func main() {
 			return nil
 		}
 
-		// Read the email file
-		email, err := readEmailFile(path)
-		if err != nil {
-			fmt.Printf("Error reading email file %s: %v\n", path, err)
-			return nil
-		}
+		// Append the path to the pathEmails slice
+		pathEmails = append(pathEmails, path)
 
-		emails = append(emails, email)
-		if len(emails) >= 2000 {
-			uploadToDatabase(emails)
-			emails = nil
-		}
+		// Read the email file
+		// email, err := readEmailFile(path)
+		// if err != nil {
+		// 	fmt.Printf("Error reading email file %s: %v\n", path, err)
+		// 	return nil
+		// }
+
+		// Append the email to the emails slice
+		// emails = append(emails, email)
+		// if len(emails) >= 5000 {
+		// 	// Add 1 to the WaitGroup
+		// 	wg.Add(1)
+		// 	// Upload the emails to the database
+		// 	go uploadToDatabase(emails, wg)
+		// 	emails = nil
+		// }
+
+		// Add 1 to the WaitGroup
+		// wg.Add(1)
+		// Upload the email to the database
+		// go uploadToDatabase(email, wg)
 
 		return nil
 	})
@@ -78,14 +100,61 @@ func main() {
 		fmt.Printf("Error walking the directory: %v\n", err)
 	}
 
-	// uploadToDatabase(emails)
+	division := len(pathEmails) / constants.DivisionOfPaths
+
+	if len(pathEmails)%constants.DivisionOfPaths != 0 {
+		fmt.Println("Division of paths is not even")
+		// stop main
+		os.Exit(1)
+	}
+
+	if len(pathEmails)%constants.DivisionOfPaths == 0 {
+		for i := 0; i < constants.DivisionOfPaths; i++ {
+			start := i * division
+			end := start + (division - 1)
+			// fmt.Printf("Start: %d End: %d\n", start, end)
+			wg.Add(1)
+			go readPathEmails(pathEmails, start, end, wg)
+		}
+	}
+
+	// Wait for all the goroutines to finish
+	wg.Wait()
 
 	runtime.GC() // Force garbage collection to get up-to-date statistics
 	if err := pprof.WriteHeapProfile(memFile); err != nil {
 		log.Fatal("could not write memory profile: ", err)
 	}
 
+	// Print the number of emails processed and division
+	fmt.Printf("Number of emails processed: %d Division of paths: %d\n", len(pathEmails), constants.DivisionOfPaths)
+	// end time
+	end := time.Now()
+	fmt.Println("End time is: ", end)
+	// Print the time taken
+	duration := time.Since(start).Seconds()
+	fmt.Printf("Time taken: %f seconds\n", duration)
 	fmt.Println("Done")
+}
+
+// readPathEmails reads the emails from the paths
+func readPathEmails(pathEmails []string, start int, end int, wg *sync.WaitGroup) {
+	defer wg.Done()
+
+	// var emails []models.Email
+
+	for i := start; i <= end; i++ {
+		email, err := readEmailFile(pathEmails[i])
+		if err != nil {
+			fmt.Printf("Error reading email file %s: %v\n", pathEmails[i], err)
+			return
+		}
+		// emails = append(emails, email)
+		wg.Add(1)
+		go uploadToDatabase(email, wg)
+		// emails = nil
+	}
+
 }
 
 // readEmailFile given a file path, it reads the email file and returns an Email struct
@@ -198,7 +267,7 @@ func createNewIndex() {
 	}
 
 	// Set the basic auth and the content type
-	req.SetBasicAuth("admin", "admin123")
+	req.SetBasicAuth(constants.User, constants.Password)
 	req.Header.Set("Content-Type", "application/json")
 
 	// Create a new client
@@ -227,34 +296,43 @@ func createNewIndex() {
 
 	// Print the response body
 	fmt.Println(string(body))
+	if strings.Contains(string(body), "already exists") {
+		fmt.Println("Index already exists")
+		// stop main
+		os.Exit(1)
+	}
 }
 
 // uploadToDatabase uploads the emails to the database
-func uploadToDatabase(emails []models.Email) {
+func uploadToDatabase(email models.Email, wg *sync.WaitGroup) {
 
-	// Create a new Bulk struct
+	defer wg.Done()
+
+	// Create a new Bulk
 	// Index is the name of the index in ZincSearch
 	// Records is the slice of emails
-	emailData := models.Bulk{
-		Index:   constants.IndexName,
-		Records: emails,
-	}
+	// emailData := models.Single{
+	// 	Index:  constants.IndexName,
+	// 	Record: email,
+	// }
 
 	// Encode the Bulk struct to JSON
-	jsonData, err := json.Marshal(emailData)
+	jsonData, err := json.Marshal(email)
 	if err != nil {
 		fmt.Printf("Error encoding to JSON: %v\n", err)
 		return
 	}
 
 	// Create a new request
-	req, err := http.NewRequest("POST", "http://localhost:4080/api/_bulkv2", bytes.NewReader(jsonData))
+	// API bulk is http://localhost:4080/api/_bulkv2
+	// API single is http://localhost:4080/api/name/_doc
+	req, err := http.NewRequest("POST", "http://localhost:4080/api/"+constants.IndexName+"/_doc", bytes.NewReader(jsonData))
 	if err != nil {
 		fmt.Printf("Error creating the request: %v\n", err)
 	}
 
 	// Set the basic auth and the content type
-	req.SetBasicAuth("admin", "admin123")
+	req.SetBasicAuth(constants.User, constants.Password)
 	req.Header.Set("Content-Type", "application/json")
 
 	// Create a new client
@@ -269,14 +347,4 @@ func uploadToDatabase(emails []models.Email) {
 
 	// Close the response body
 	defer resp.Body.Close()
-
-	// Read the response body
-	body, err := io.ReadAll(resp.Body)
-	if err != nil {
-		fmt.Println("Error reading response body:", err, string(body))
-		return
-	}
-
-	// Print the response body
-	// fmt.Println(string(body))
 }
