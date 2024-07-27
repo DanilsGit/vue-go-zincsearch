@@ -1,7 +1,7 @@
 package constants
 
 // Index name in zincsearch
-const IndexName string = "indexer-database-v6"
+const IndexName string = "indexer-database"
 
 // Divisors of the paths
 const DivisionOfPaths int = 73

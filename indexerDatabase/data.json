@@ -1,5 +1,5 @@
 {
-    "name": "indexer-database-v6",
+    "name": "indexer-database",
     "storage_type": "disk",
     "mappings": {
         "properties": {
@@ -23,7 +23,7 @@
                 "type": "text",
                 "index": true,
                 "store": false,
-                "sortable": false,
+                "sortable": true,
                 "aggregatable": false,
                 "highlightable": true
             },

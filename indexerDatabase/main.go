@@ -150,11 +150,18 @@ func readPathEmails(pathEmails []string, start int, end int, wg *sync.WaitGroup)
 			return
 		}
 		// emails = append(emails, email)
+		// if len(emails) >= 5000 {
+		// 	wg.Add(1)
+		// 	go uploadToDatabase(emails, wg)
+		// 	emails = nil
+		// }
+		// if i == end && len(emails) > 0 {
+		// 	wg.Add(1)
+		// 	go uploadToDatabase(emails, wg)
+		// }
 		wg.Add(1)
 		go uploadToDatabase(email, wg)
-		// emails = nil
 	}
-
 }
 
 // readEmailFile given a file path, it reads the email file and returns an Email struct
@@ -311,9 +318,9 @@ func uploadToDatabase(email models.Email, wg *sync.WaitGroup) {
 	// Create a new Bulk
 	// Index is the name of the index in ZincSearch
 	// Records is the slice of emails
-	// emailData := models.Single{
-	// 	Index:  constants.IndexName,
-	// 	Record: email,
+	// emailData := models.Bulk{
+	// 	Index:   constants.IndexName,
+	// 	Records: emails,
 	// }
 
 	// Encode the Bulk struct to JSON
@@ -325,7 +332,7 @@ func uploadToDatabase(email models.Email, wg *sync.WaitGroup) {
 
 	// Create a new request
 	// API bulk is http://localhost:4080/api/_bulkv2
-	// API single is http://localhost:4080/api/name/_doc
+	// API single is http://localhost:4080/api/"+constants.IndexName+"/_doc"
 	req, err := http.NewRequest("POST", "http://localhost:4080/api/"+constants.IndexName+"/_doc", bytes.NewReader(jsonData))
 	if err != nil {
 		fmt.Printf("Error creating the request: %v\n", err)
