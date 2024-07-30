@@ -1,0 +1,35 @@
+services:
+  database:
+    image: public.ecr.aws/zinclabs/zincsearch:latest
+    environment:
+      - ZINC_FIRST_ADMIN_USER=admin
+      - ZINC_FIRST_ADMIN_PASSWORD=admin123
+    ports:
+      - "4080:4080"
+    volumes:
+      - index-data:/data
+  backend:
+    build: ./backend
+    ports:
+      - "8080:8080"
+    depends_on:
+      - database
+    environment:
+      - ADMIN=admin
+      - ADMIN_PASS=admin123
+      - PORT=8080
+      - DATABASE_URL=http://database:4080
+  frontend:
+    build:
+      context: ./frontend
+      args:
+        - API_URL
+    ports:
+      - "5173:5173"
+    environment:
+      - API_URL
+    depends_on:
+      - backend
+
+volumes:
+  index-data:

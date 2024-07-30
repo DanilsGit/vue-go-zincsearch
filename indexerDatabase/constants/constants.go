@@ -3,9 +3,11 @@ package constants
 // Index name in zincsearch
 const IndexName string = "indexer-database"
 
-// Divisors of the paths
-const DivisionOfPaths int = 73
+// Directory where the emails are stored
+const Directory string = "./emails/enron_mail_20110402/maildir"
 
-// Credentials
-const User string = "admin"
-const Password string = "admin123"
+// Number of subdivisions
+const Subdivisions int = 100
+
+// Number of workers to read the emails
+const Workers int = 10

@@ -35,8 +35,11 @@ func SearchHandler(w http.ResponseWriter, r *http.Request) {
 		}`,
 		_type, _search, _sort+"date", _from, _max)
 
+	// DATABASE_URL
+	database_url := os.Getenv("DATABASE_URL") + "/api/indexer-database/_search"
+
 	// create the request
-	req, err := http.NewRequest("POST", "http://localhost:4080/api/indexer-database/_search", strings.NewReader(query))
+	req, err := http.NewRequest("POST", database_url, strings.NewReader(query))
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -95,8 +98,13 @@ func GetAllHandler(w http.ResponseWriter, r *http.Request) {
 		}`,
 		_sort, _from, _max)
 
+	// DATABASE_URL
+	database_url := os.Getenv("DATABASE_URL") + "/api/indexer-database/_search"
+
+	log.Println("test propouse", database_url)
+
 	// create the request
-	req, err := http.NewRequest("POST", "http://localhost:4080/api/indexer-database/_search", strings.NewReader(query))
+	req, err := http.NewRequest("POST", database_url, strings.NewReader(query))
 	if err != nil {
 		log.Fatal(err)
 	}

@@ -2,7 +2,6 @@ package main
 
 import (
 	"bytes"
-	"encoding/json"
 	"fmt"
 	"io"
 	"log"
@@ -16,7 +15,7 @@ import (
 	"time"
 
 	"github.com/danilsgit/indexerDatabase/constants"
-	"github.com/danilsgit/indexerDatabase/models"
+	utils "github.com/danilsgit/indexerDatabase/utils"
 )
 
 func main() {
@@ -49,7 +48,8 @@ func main() {
 	wg := &sync.WaitGroup{}
 
 	// data is the Enron email dataset
-	data := "./enron_mail_20110402/maildir"
+	data := constants.Directory
+
 	// Emails slice
 	var pathEmails []string
 
@@ -71,28 +71,6 @@ func main() {
 		// Append the path to the pathEmails slice
 		pathEmails = append(pathEmails, path)
 
-		// Read the email file
-		// email, err := readEmailFile(path)
-		// if err != nil {
-		// 	fmt.Printf("Error reading email file %s: %v\n", path, err)
-		// 	return nil
-		// }
-
-		// Append the email to the emails slice
-		// emails = append(emails, email)
-		// if len(emails) >= 5000 {
-		// 	// Add 1 to the WaitGroup
-		// 	wg.Add(1)
-		// 	// Upload the emails to the database
-		// 	go uploadToDatabase(emails, wg)
-		// 	emails = nil
-		// }
-
-		// Add 1 to the WaitGroup
-		// wg.Add(1)
-		// Upload the email to the database
-		// go uploadToDatabase(email, wg)
-
 		return nil
 	})
 
@@ -100,22 +78,16 @@ func main() {
 		fmt.Printf("Error walking the directory: %v\n", err)
 	}
 
-	division := len(pathEmails) / constants.DivisionOfPaths
+	// create semaphore
+	sem := make(chan struct{}, constants.Workers)
 
-	if len(pathEmails)%constants.DivisionOfPaths != 0 {
-		fmt.Println("Division of paths is not even")
-		// stop main
-		os.Exit(1)
-	}
+	// Slice of emails divided in n parts
+	rangeOfParts := utils.RangeOfParts(len(pathEmails), constants.Subdivisions)
 
-	if len(pathEmails)%constants.DivisionOfPaths == 0 {
-		for i := 0; i < constants.DivisionOfPaths; i++ {
-			start := i * division
-			end := start + (division - 1)
-			// fmt.Printf("Start: %d End: %d\n", start, end)
-			wg.Add(1)
-			go readPathEmails(pathEmails, start, end, wg)
-		}
+	// For each part, read the emails
+	for i := 0; i < len(rangeOfParts)-1; i++ {
+		wg.Add(1)
+		go utils.ReadPathEmails(pathEmails, rangeOfParts[i], rangeOfParts[i+1]-1, wg, sem)
 	}
 
 	// Wait for all the goroutines to finish
@@ -127,7 +99,7 @@ func main() {
 	}
 
 	// Print the number of emails processed and division
-	fmt.Printf("Number of emails processed: %d Division of paths: %d\n", len(pathEmails), constants.DivisionOfPaths)
+	fmt.Printf("Number of emails processed: %d\n", len(pathEmails))
 	// end time
 	end := time.Now()
 	fmt.Println("End time is: ", end)
@@ -135,152 +107,6 @@ func main() {
 	duration := time.Since(start).Seconds()
 	fmt.Printf("Time taken: %f seconds\n", duration)
 	fmt.Println("Done")
-}
-
-// readPathEmails reads the emails from the paths
-func readPathEmails(pathEmails []string, start int, end int, wg *sync.WaitGroup) {
-	defer wg.Done()
-
-	// var emails []models.Email
-
-	for i := start; i <= end; i++ {
-		email, err := readEmailFile(pathEmails[i])
-		if err != nil {
-			fmt.Printf("Error reading email file %s: %v\n", pathEmails[i], err)
-			return
-		}
-		// emails = append(emails, email)
-		// if len(emails) >= 5000 {
-		// 	wg.Add(1)
-		// 	go uploadToDatabase(emails, wg)
-		// 	emails = nil
-		// }
-		// if i == end && len(emails) > 0 {
-		// 	wg.Add(1)
-		// 	go uploadToDatabase(emails, wg)
-		// }
-		wg.Add(1)
-		go uploadToDatabase(email, wg)
-	}
-}
-
-// readEmailFile given a file path, it reads the email file and returns an Email struct
-func readEmailFile(filePath string) (models.Email, error) {
-
-	// Read the file content
-	content, err := os.ReadFile(filePath)
-
-	// If there is an error, return it
-	if err != nil {
-		return models.Email{}, err
-	}
-
-	// Find the end of the header, it is marked by a new line followed by a carriage return
-	headerEnd := strings.Index(string(content), "\n\r")
-
-	// If the header end is not found, return an error
-	if headerEnd == -1 {
-		return models.Email{}, fmt.Errorf("invalid email: %s", filePath)
-	}
-
-	// Split the header by new line
-	headers := strings.Split(string(content[:headerEnd]), "\n")
-
-	// The body of the email starts after the header
-	// +2 to skip the new line and carriage return
-	body := string(content[headerEnd+2:])
-
-	// Create a new Email struct
-	email := models.Email{}
-
-	// for each header line, set the value in the Email struct
-	for _, line := range headers {
-		setHeader(line, &email)
-	}
-
-	// Set the body of the email
-	email.Content = body
-
-	// Return the Email struct
-	return email, nil
-}
-
-// setHeader given a header line and an Email struct, it sets the value in the Email struct
-func setHeader(line string, email *models.Email) {
-
-	// Split the line by the colon
-	parts := strings.SplitN(line, ":", 2)
-
-	// If the line does not have a colon or the parts are not 2, return
-	if len(parts) != 2 {
-		return
-	}
-
-	// Trim the spaces from the parts
-	header := strings.TrimSpace(parts[0])
-	header_value := strings.TrimSpace(parts[1])
-
-	// Switch the header name and set the value in the Email struct
-	switch header {
-	case "Message-ID":
-		email.MessageID = header_value
-	case "Date":
-		parsedDate := parseDateWithFormats(header_value)
-		email.Date = parsedDate
-	case "From":
-		email.From = header_value
-	case "To":
-		email.To = header_value
-	case "Subject":
-		email.Subject = header_value
-	case "Mime-Version":
-		email.MimeVersion = header_value
-	case "Content-Type":
-		email.ContentType = header_value
-	case "Content-Transfer-Encoding":
-		email.ContentTransferEncoding = header_value
-	case "X-From":
-		email.XFrom = header_value
-	case "X-To":
-		email.XTo = header_value
-	case "X-cc":
-		email.Xcc = header_value
-	case "X-bcc":
-		email.Xbcc = header_value
-	case "X-Folder":
-		email.XFolder = header_value
-	case "X-Origin":
-		email.XOrigin = header_value
-	case "X-FileName":
-		email.XFilename = header_value
-	}
-}
-
-// parseDateWithFormats given a date string, it tries to parse it with multiple formats
-func parseDateWithFormats(date string) time.Time {
-	formats := []string{
-		"Mon, _2 Jan 2006 15:04:05 -0700 (MST)",
-		"Monday, January 2, 2006",
-		"Monday, March 12",
-	}
-
-	var parsedDate time.Time
-	var err error
-	for _, layout := range formats {
-		if len(date) == len("Monday, March 12") {
-			date = date + ", 2000"
-		}
-		parsedDate, err = time.Parse(layout, date)
-		if err == nil {
-			return parsedDate
-		}
-	}
-
-	fmt.Printf("Error parsing date: %v\n", err)
-	fmt.Printf("Date: %s\n", date)
-	// stop main
-	os.Exit(1)
-	return time.Time{}
 }
 
 // createNewIndex creates a new index in ZincSearch
@@ -301,8 +127,12 @@ func createNewIndex() {
 		fmt.Printf("Error creating the request: %v\n", err)
 	}
 
+	// Get the credentials from the environment variables
+	admin := os.Getenv("ADMIN")
+	admin_pass := os.Getenv("ADMIN_PASS")
+
 	// Set the basic auth and the content type
-	req.SetBasicAuth(constants.User, constants.Password)
+	req.SetBasicAuth(admin, admin_pass)
 	req.Header.Set("Content-Type", "application/json")
 
 	// Create a new client
@@ -333,46 +163,42 @@ func createNewIndex() {
 	fmt.Println(string(body))
 	if strings.Contains(string(body), "already exists") {
 		fmt.Println("Index already exists")
+
+		// get in console if the user wants to delete the index
+		fmt.Println("Do you want to delete the index? (yes/no)")
+		var input string
+		fmt.Scanln(&input)
+
+		// if the user wants to delete the index
+		if input == "yes" {
+			deleteIndex()
+		}
 		// stop main
 		os.Exit(1)
 	}
 }
 
-// uploadToDatabase uploads the emails to the database
-func uploadToDatabase(email models.Email, wg *sync.WaitGroup) {
-
-	defer wg.Done()
-
-	// Create a new Bulk
-	// emailData := models.Bulk{
-	// 	Index:   constants.IndexName,
-	// 	Records: emails,
-	// }
-
-	// Encode the Bulk struct to JSON
-	jsonData, err := json.Marshal(email)
-	if err != nil {
-		fmt.Printf("Error encoding to JSON: %v\n", err)
-		return
-	}
+func deleteIndex() {
+	// Get the credentials from the environment variables
+	admin := os.Getenv("ADMIN")
+	admin_pass := os.Getenv("ADMIN_PASS")
 
 	// Create a new request
-	// API bulk is http://localhost:4080/api/_bulkv2
-	// API single is http://localhost:4080/api/"+constants.IndexName+"/_doc"
-	req, err := http.NewRequest("POST", "http://localhost:4080/api/"+constants.IndexName+"/_doc", bytes.NewReader(jsonData))
+	req, err := http.NewRequest("DELETE", "http://localhost:4080/api/index/"+constants.IndexName, nil)
 	if err != nil {
 		fmt.Printf("Error creating the request: %v\n", err)
 	}
 
-	// Set the basic auth and the content type
-	req.SetBasicAuth(constants.User, constants.Password)
-	req.Header.Set("Content-Type", "application/json")
+	// Set the basic auth
+	req.SetBasicAuth(admin, admin_pass)
 
 	// Create a new client
 	client := &http.Client{}
 
 	// Send the request
 	resp, err := client.Do(req)
+
+	// If there is an error, print it and return
 	if err != nil {
 		fmt.Println("Error sending request:", err)
 		return
@@ -380,4 +206,16 @@ func uploadToDatabase(email models.Email, wg *sync.WaitGroup) {
 
 	// Close the response body
 	defer resp.Body.Close()
+
+	// Read the response body
+	body, err := io.ReadAll(resp.Body)
+
+	// If there is an error, print it and return
+	if err != nil {
+		fmt.Println("Error reading response body:", err)
+		return
+	}
+
+	// Print the response body
+	fmt.Println(string(body))
 }
