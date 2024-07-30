@@ -36,8 +36,8 @@ func main() {
 	r.Get("/getAll", routes.GetAllHandler)
 
 	// Get the port
-	fmt.Println("Server running")
 	PORT := os.Getenv("PORT")
+	fmt.Println("Server running on port: ", PORT)
 
 	// Start the server
 	http.ListenAndServe(":"+PORT, r)

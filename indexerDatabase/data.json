@@ -44,7 +44,7 @@
                 "highlightable": false
             },
             "date": {
-                "type": "text",
+                "type": "date",
                 "index": false,
                 "store": false,
                 "sortable": false,

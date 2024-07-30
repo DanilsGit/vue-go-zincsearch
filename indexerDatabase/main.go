@@ -217,42 +217,70 @@ func setHeader(line string, email *models.Email) {
 	}
 
 	// Trim the spaces from the parts
-	headerName := strings.TrimSpace(parts[0])
-	headerValue := strings.TrimSpace(parts[1])
+	header := strings.TrimSpace(parts[0])
+	header_value := strings.TrimSpace(parts[1])
 
 	// Switch the header name and set the value in the Email struct
-	switch headerName {
+	switch header {
 	case "Message-ID":
-		email.MessageID = headerValue
+		email.MessageID = header_value
 	case "Date":
-		email.Date = headerValue
+		parsedDate := parseDateWithFormats(header_value)
+		email.Date = parsedDate
 	case "From":
-		email.From = headerValue
+		email.From = header_value
 	case "To":
-		email.To = headerValue
+		email.To = header_value
 	case "Subject":
-		email.Subject = headerValue
+		email.Subject = header_value
 	case "Mime-Version":
-		email.MimeVersion = headerValue
+		email.MimeVersion = header_value
 	case "Content-Type":
-		email.ContentType = headerValue
+		email.ContentType = header_value
 	case "Content-Transfer-Encoding":
-		email.ContentTransferEncoding = headerValue
+		email.ContentTransferEncoding = header_value
 	case "X-From":
-		email.XFrom = headerValue
+		email.XFrom = header_value
 	case "X-To":
-		email.XTo = headerValue
+		email.XTo = header_value
 	case "X-cc":
-		email.Xcc = headerValue
+		email.Xcc = header_value
 	case "X-bcc":
-		email.Xbcc = headerValue
+		email.Xbcc = header_value
 	case "X-Folder":
-		email.XFolder = headerValue
+		email.XFolder = header_value
 	case "X-Origin":
-		email.XOrigin = headerValue
+		email.XOrigin = header_value
 	case "X-FileName":
-		email.XFilename = headerValue
+		email.XFilename = header_value
 	}
+}
+
+// parseDateWithFormats given a date string, it tries to parse it with multiple formats
+func parseDateWithFormats(date string) time.Time {
+	formats := []string{
+		"Mon, _2 Jan 2006 15:04:05 -0700 (MST)",
+		"Monday, January 2, 2006",
+		"Monday, March 12",
+	}
+
+	var parsedDate time.Time
+	var err error
+	for _, layout := range formats {
+		if len(date) == len("Monday, March 12") {
+			date = date + ", 2000"
+		}
+		parsedDate, err = time.Parse(layout, date)
+		if err == nil {
+			return parsedDate
+		}
+	}
+
+	fmt.Printf("Error parsing date: %v\n", err)
+	fmt.Printf("Date: %s\n", date)
+	// stop main
+	os.Exit(1)
+	return time.Time{}
 }
 
 // createNewIndex creates a new index in ZincSearch
@@ -316,8 +344,6 @@ func uploadToDatabase(email models.Email, wg *sync.WaitGroup) {
 	defer wg.Done()
 
 	// Create a new Bulk
-	// Index is the name of the index in ZincSearch
-	// Records is the slice of emails
 	// emailData := models.Bulk{
 	// 	Index:   constants.IndexName,
 	// 	Records: emails,

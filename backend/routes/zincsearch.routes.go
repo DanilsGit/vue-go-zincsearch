@@ -88,12 +88,12 @@ func GetAllHandler(w http.ResponseWriter, r *http.Request) {
 			"query": {
 				"term": ""
 			},
-			"sort_fields": ["%s"],
+			"sort_fields": ["%sdate"],
 			"from": %s,
 			"max_results": %s,
 			"_source": []
 		}`,
-		_sort+"date", _from, _max)
+		_sort, _from, _max)
 
 	// create the request
 	req, err := http.NewRequest("POST", "http://localhost:4080/api/indexer-database/_search", strings.NewReader(query))
