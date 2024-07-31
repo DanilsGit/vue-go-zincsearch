@@ -131,6 +131,14 @@ func createNewIndex() {
 	admin := os.Getenv("ADMIN")
 	admin_pass := os.Getenv("ADMIN_PASS")
 
+	fmt.Println(admin, admin_pass)
+
+	if admin == "" || admin_pass == "" {
+		fmt.Println("Please set the ADMIN and ADMIN_PASS environment")
+		admin = "admin"
+		admin_pass = "admin123"
+	}
+
 	// Set the basic auth and the content type
 	req.SetBasicAuth(admin, admin_pass)
 	req.Header.Set("Content-Type", "application/json")
