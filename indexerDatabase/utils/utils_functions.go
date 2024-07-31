@@ -135,12 +135,8 @@ func uploadToDatabase(emails []models.Email) {
 		fmt.Printf("Error creating the request: %v\n", err)
 	}
 
-	// Get the credentials from the environment variables
-	admin := os.Getenv("ADMIN")
-	admin_pass := os.Getenv("ADMIN_PASS")
-
 	// Set the basic auth and the content type
-	req.SetBasicAuth(admin, admin_pass)
+	req.SetBasicAuth(constants.Admin, constants.Password)
 	req.Header.Set("Content-Type", "application/json")
 
 	// Send the request

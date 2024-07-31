@@ -11,3 +11,7 @@ const Subdivisions int = 100
 
 // Number of workers to read the emails
 const Workers int = 10
+
+// admin and password for the database
+const Admin string = "admin"
+const Password string = "admin123"

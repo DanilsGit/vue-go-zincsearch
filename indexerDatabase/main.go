@@ -127,20 +127,8 @@ func createNewIndex() {
 		fmt.Printf("Error creating the request: %v\n", err)
 	}
 
-	// Get the credentials from the environment variables
-	admin := os.Getenv("ADMIN")
-	admin_pass := os.Getenv("ADMIN_PASS")
-
-	fmt.Println(admin, admin_pass)
-
-	if admin == "" || admin_pass == "" {
-		fmt.Println("Please set the ADMIN and ADMIN_PASS environment")
-		admin = "admin"
-		admin_pass = "admin123"
-	}
-
 	// Set the basic auth and the content type
-	req.SetBasicAuth(admin, admin_pass)
+	req.SetBasicAuth(constants.Admin, constants.Password)
 	req.Header.Set("Content-Type", "application/json")
 
 	// Create a new client
@@ -187,10 +175,6 @@ func createNewIndex() {
 }
 
 func deleteIndex() {
-	// Get the credentials from the environment variables
-	admin := os.Getenv("ADMIN")
-	admin_pass := os.Getenv("ADMIN_PASS")
-
 	// Create a new request
 	req, err := http.NewRequest("DELETE", "http://localhost:4080/api/index/"+constants.IndexName, nil)
 	if err != nil {
@@ -198,7 +182,7 @@ func deleteIndex() {
 	}
 
 	// Set the basic auth
-	req.SetBasicAuth(admin, admin_pass)
+	req.SetBasicAuth(constants.Admin, constants.Password)
 
 	// Create a new client
 	client := &http.Client{}
