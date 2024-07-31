@@ -20,8 +20,12 @@ services:
   frontend:
     build:
       context: ./frontend
+    env_file:
+      - ./frontend/.env
     ports:
       - "5173:5173"
+    environment:
+      - API_URL=http://backend:8080
     depends_on:
       - backend
 volumes:

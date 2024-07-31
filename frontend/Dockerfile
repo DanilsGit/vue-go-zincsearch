@@ -14,7 +14,7 @@ RUN npm install
 COPY . .
 
 # Genera el archivo .env
-RUN node generate-env.js
+# RUN node generate-env.js
 
 # Construye el proyecto
 RUN npm run build
