@@ -20,7 +20,11 @@ export class EmailService {
 
   async fetchAllEmails(sort:string, offset:number, limit:number):Promise<void> {
     try {
-        const url = import.meta.env.VITE_API_URL + '/getAll';
+        let url = import.meta.env.VITE_API_URL + '/getAll';
+        console.log(import.meta.env.VITE_API_URL);
+        if (!import.meta.env.VITE_API_URL){
+          url = 'http://localhost:8080/getAll';     
+        }
         const response = await axios.get(url, {
           params: {
             from: offset.toString(),
@@ -43,7 +47,10 @@ export class EmailService {
 
   async fetchSearchEmails(search:string, sort:string, offset:number, limit:number):Promise<void> {
     try {
-        const url = import.meta.env.VITE_API_URL + '/search';
+        let url = import.meta.env.VITE_API_URL + '/search';
+      if (!import.meta.env.VITE_API_URL){
+        url = 'http://localhost:8080/search';     
+      }
         const response = await axios.get(url, {
           params: {
             type: 'matchphrase',

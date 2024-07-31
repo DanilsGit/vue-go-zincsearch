@@ -13,12 +13,6 @@ RUN npm install
 # Copia el resto de los archivos del proyecto
 COPY . .
 
-# Define el argumento de compilación
-ARG API_URL
-
-# Establece la variable de entorno
-ENV API_URL=${API_URL}
-
 # Genera el archivo .env
 RUN node generate-env.js
 

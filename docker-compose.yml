@@ -4,8 +4,6 @@ services:
     environment:
       - ZINC_FIRST_ADMIN_USER=admin
       - ZINC_FIRST_ADMIN_PASSWORD=admin123
-    ports:
-      - "4080:4080"
     volumes:
       - index-data:/data
   backend:
@@ -22,14 +20,9 @@ services:
   frontend:
     build:
       context: ./frontend
-      args:
-        - API_URL
     ports:
       - "5173:5173"
-    environment:
-      - API_URL
     depends_on:
       - backend
-
 volumes:
   index-data:

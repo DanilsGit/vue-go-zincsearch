@@ -10,8 +10,9 @@ envVariables.forEach(variable => {
     console.log(process.env[variable]);
     if (process.env[variable]) {
         envContent += `VITE_${variable}=${process.env[variable]}\n`;
-    }else {
-        envContent += `VITE_API_URL=http://localhost:8080`;
+        envContent += `found_${variable}=${process.env[variable]}\n`;
+    }else{
+        envContent += `not_found\n`;
     }
 });
 
