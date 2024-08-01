@@ -15,7 +15,7 @@ This project consists of a Zincsearch database, a backend in Go, and a frontend 
 5. Go to the root directory.
 6. Run `docker compose build`.
 7. Run `docker compose up -d`.
-8. Go to `/indexerDatabase` and configure the workers according to your machine.
+8. Go to `/indexerDatabase/constants/constants.go` and configure the workers and subdivisions according to your machine.
 9. Go to `/indexerDatabase` and run `go run main.go` (this may take a while).
 10. Test the app.
 
