@@ -7,3 +7,4 @@ terraform.tfstate.backup
 *.Identifier
 my-key
 my-key.pub
+*.prof
