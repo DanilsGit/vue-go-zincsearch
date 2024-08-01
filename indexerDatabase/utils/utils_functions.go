@@ -16,20 +16,26 @@ import (
 
 var client = &http.Client{} // client is a pointer to an http.Client
 
+// RangeOfParts given a number and the initial number of parts, it returns a slice with the range of parts
 func RangeOfParts(number, initParts int) []int {
 
+	// First | divide the number by the initial number of parts
 	equalDivision := make([]int, initParts)
-	parte := number / initParts
-	res := number % initParts
+	// Calculate the division and the remainder
+	part := number / initParts
+	rem := number % initParts
 
+	// For each part, set the value
 	for i := 0; i < initParts; i++ {
-		equalDivision[i] = parte
+		equalDivision[i] = part
 	}
 
-	for i := 0; i < res; i++ {
+	// Add the remainder to the first parts
+	for i := 0; i < rem; i++ {
 		equalDivision[i]++
 	}
 
+	//  Second | create a response slice with the range of parts
 	response := make([]int, len(equalDivision)+1)
 	response[0] = 0
 	for i := 1; i < len(equalDivision)+1; i++ {

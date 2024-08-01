@@ -69,9 +69,16 @@ resource "aws_security_group" "app_sg" {
   }
 }
 
+resource "aws_key_pair" "my_key" {
+  key_name   = "my-key"
+  public_key = file("${path.module}/my-key.pub")
+}
+
 resource "aws_instance" "app_server" {
   ami           = data.aws_ami.ubuntu.id
   instance_type = "t2.micro"
+
+  key_name      = aws_key_pair.my_key.key_name
 
   vpc_security_group_ids = [aws_security_group.app_sg.id]
 
@@ -113,6 +120,9 @@ resource "aws_instance" "app_server" {
               # Clona el repositorio
               git clone https://github.com/DanilsGit/vue-go-zincsearch.git /home/ubuntu/app
 
+              #Permisos
+              sudo chown -R ubuntu:ubuntu /home/ubuntu/app
+
               # Navega al directorio del proyecto
               #cd /home/ubuntu/app
 
@@ -146,7 +156,7 @@ resource "aws_instance" "app_server" {
               EOF
 
   tags = {
-    Name = "test-app-server"
+    Name = "emails-vue-go"
   }
 }
 
