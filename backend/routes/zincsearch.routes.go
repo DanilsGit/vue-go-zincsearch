@@ -35,6 +35,8 @@ func SearchHandler(w http.ResponseWriter, r *http.Request) {
 		}`,
 		_type, _search, _sort+"date", _from, _max)
 
+	fmt.Println(query)
+
 	// DATABASE_URL
 	database_url := os.Getenv("DATABASE_URL") + "/api/indexer-database/_search"
 
@@ -100,8 +102,6 @@ func GetAllHandler(w http.ResponseWriter, r *http.Request) {
 
 	// DATABASE_URL
 	database_url := os.Getenv("DATABASE_URL") + "/api/indexer-database/_search"
-
-	log.Println("test propouse", database_url)
 
 	// create the request
 	req, err := http.NewRequest("POST", database_url, strings.NewReader(query))

@@ -4,7 +4,7 @@ import { IHit } from './interfaces/IEmail';
 import { EmailService } from './services/EmailService'
 import { onBeforeMount, ref, Ref, computed } from 'vue'
 
-const sort = ref("-")
+const sort = ref("")
 const totalEmails: Ref<number> = ref(0)
 const offset: Ref<number> = ref(0)
 const limit: Ref<number> = ref(25)
@@ -105,9 +105,17 @@ const prevPage = async (): Promise<void> => {
 
 const highlightText = (text: string) => {
   if (!search.value) return text;
-  const regex = new RegExp(`(${search.value})`, 'gi');
+
+  // Escapar caracteres especiales en `search.value`
+  const escapedSearchValue = search.value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+
+  // Crear la expresión regular con el valor escapado
+  const regex = new RegExp(`(${escapedSearchValue})`, 'gi');
+
+  // Reemplazar las coincidencias con la marca <mark>
   return text.replace(regex, '<mark class="bg-yellow-300">$1</mark>');
 };
+
 
 const highlightedEmails = computed(() => {
   return emails.value.map(email => {
@@ -121,6 +129,25 @@ const highlightedEmails = computed(() => {
     };
   });
 });
+
+const toggleSort = async (): Promise<void> => {
+  sort.value = sort.value === "" ? "-" : ""
+  loading.value = true
+
+  if (search.value) {
+    await emailService.fetchSearchEmails(search.value, sort.value, offset.value, limit.value)
+  } else {
+    await emailService.fetchAllEmails(sort.value, offset.value, limit.value)
+  }
+
+  console.log(sort.value);
+  
+
+  loading.value = false
+  emails.value = emailService.getEmails().value
+  totalEmails.value = emailService.getTotalEmails().value
+}
+  
 
 </script>
 
@@ -150,9 +177,10 @@ const highlightedEmails = computed(() => {
       <!-- Header in content -->
       <header class="flex justify-between" v-if="!emailActive">
 
-        <form class="flex-1 max-w-[40%]  gap-2 items-center flex">
+        <div class="flex-1 max-w-[40%]  gap-2 items-center flex">
           <label for="countries"
-            class="hidden md:block text-sm font-medium text-gray-900 dark:text-white">Filas</label>
+            class="hidden text-sm font-medium text-gray-900 dark:text-white">Filas</label>
+            <button @click="toggleSort">+</button>
           <select id="countries" @change="handleChangeLimit"
             class="bg-gray-50 border h-5 border-gray-300 text-gray-900 text-xs rounded-lg focus:ring-blue-500 focus:border-blue-500 block flex-1 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500">
             <option value="25">Ver 25 resultados</option>
@@ -160,7 +188,7 @@ const highlightedEmails = computed(() => {
             <option value="100">Ver 100 resultados</option>
             <option value="150">Ver 150 resultados</option>
           </select>
-        </form>
+        </div>
 
         <div class="flex-1 flex gap-2 items-center justify-end">
           <p class="md:text-sm text-xs">{{ offset + 1 }} - {{ max }} de {{ totalEmails }}</p>

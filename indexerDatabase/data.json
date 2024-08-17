@@ -45,9 +45,9 @@
             },
             "date": {
                 "type": "date",
-                "index": false,
+                "index": true,
                 "store": false,
-                "sortable": false,
+                "sortable": true,
                 "aggregatable": false,
                 "highlightable": false
             },

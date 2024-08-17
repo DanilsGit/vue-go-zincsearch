@@ -55,6 +55,13 @@ export class EmailService {
             search : search
           }
         });
+
+        if (!response.data.hits) response.data.hits = {hits: [], total: {value: 0}};
+        
+        response.data.hits.hits.forEach((email:IHit) => {
+          console.log(email._source.date);
+        });
+
         response.data.hits.hits.forEach((email:IHit) => {
           email._source.date = this.parseDate(email._source.date);
           email._source.x_from = this.parseName(email._source.x_from);
@@ -62,8 +69,8 @@ export class EmailService {
         this.emails.value = response.data.hits.hits;
         this.totalEmails.value = response.data.hits.total.value;
     } catch (error) {
-        console.log("Error fetching emails");
-        console.log(error);
+        // console.log("Error fetching emails");
+        // console.log(error);
     }
   }
 
@@ -71,7 +78,7 @@ export class EmailService {
     const dateSplit = new Date(date).toLocaleString().split(',')[0].split('/');
     const day = Number(dateSplit[0]) < 10 ? '0' + dateSplit[0] : dateSplit[0];
     const month = Number(dateSplit[1]) < 10 ? '0' + dateSplit[1] : dateSplit[1];
-    const year = dateSplit[2];
+    const year = Number(dateSplit[2]) < 1000 ? '000' + dateSplit[2] : dateSplit[2];
     return `${day}/${month}/${year}`;
   }
 
